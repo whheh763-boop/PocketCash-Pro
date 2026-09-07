@@ -1,3 +1,4 @@
+cat << 'INNER_EOF' > app/src/main/java/com/example/MainActivity.kt
 package com.example
 
 import android.os.Bundle
@@ -115,3 +116,4 @@ fun PocketCashApp() {
         }
     }
 }
+INNER_EOF

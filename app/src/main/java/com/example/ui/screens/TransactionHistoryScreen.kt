@@ -33,7 +33,7 @@ fun TransactionHistoryScreen(
     val transactions by viewModel.transactions.collectAsState()
 
     LaunchedEffect(Unit) {
-        viewModel.fetchTransactions()
+        
     }
 
     Scaffold(

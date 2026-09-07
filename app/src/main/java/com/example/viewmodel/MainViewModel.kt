@@ -30,8 +30,12 @@ class MainViewModel : ViewModel() {
     private val _transactions = MutableStateFlow<List<Transaction>>(emptyList())
     val transactions: StateFlow<List<Transaction>> = _transactions.asStateFlow()
     
+    private val _leaderboard = MutableStateFlow<List<User>>(emptyList())
+    val leaderboard: StateFlow<List<User>> = _leaderboard.asStateFlow()
+    
     private var userFlowJob: Job? = null
     private var txFlowJob: Job? = null
+    private var leaderFlowJob: Job? = null
 
     init {
         // Automatically check if logged in
@@ -50,11 +54,21 @@ class MainViewModel : ViewModel() {
         val uid = repository.signUpWithEmail(email, pass, country, refCode)
         startObserving(uid)
     }
+    
+    fun logout() {
+        repository.logout()
+        currentUid = ""
+        userFlowJob?.cancel()
+        txFlowJob?.cancel()
+        _userState.value = User()
+        _transactions.value = emptyList()
+    }
 
     private fun startObserving(uid: String) {
         currentUid = uid
         userFlowJob?.cancel()
         txFlowJob?.cancel()
+        leaderFlowJob?.cancel()
         
         userFlowJob = viewModelScope.launch(Dispatchers.IO) {
             repository.getUserFlow(currentUid).collect { user ->
@@ -65,6 +79,12 @@ class MainViewModel : ViewModel() {
         txFlowJob = viewModelScope.launch(Dispatchers.IO) {
             repository.getTransactionsFlow(currentUid).collect { txList ->
                 _transactions.value = txList
+            }
+        }
+        
+        leaderFlowJob = viewModelScope.launch(Dispatchers.IO) {
+            repository.getLeaderboardFlow().collect { list ->
+                _leaderboard.value = list
             }
         }
     }
@@ -89,7 +109,6 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    fun fetchTransactions() {}
     fun addCoins(amount: Int, reason: String = "Task Reward") {
         if (currentUid.isNotEmpty()) {
             viewModelScope.launch(Dispatchers.IO) {

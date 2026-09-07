@@ -64,6 +64,25 @@ class FirebaseRepository {
         }
     }
     
+    fun logout() {
+        auth.signOut()
+    }
+
+    fun getLeaderboardFlow(): Flow<List<User>> = callbackFlow {
+        val listener = usersRef.orderBy("coinBalance", Query.Direction.DESCENDING).limit(50)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                if (snapshot != null) {
+                    val list = snapshot.documents.mapNotNull { it.toObject(User::class.java) }
+                    trySend(list)
+                }
+            }
+        awaitClose { listener.remove() }
+    }
+
     fun isUserLoggedIn(): String? {
         return auth.currentUser?.uid
     }

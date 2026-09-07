@@ -1,3 +1,4 @@
+cat << 'INNER_EOF' > app/src/main/java/com/example/ui/screens/ProfileScreen.kt
 package com.example.ui.screens
 
 import android.content.Intent
@@ -127,3 +128,4 @@ fun ProfileMenuItem(icon: androidx.compose.ui.graphics.vector.ImageVector, text:
         Text(text, style = MaterialTheme.typography.bodyLarge)
     }
 }
+INNER_EOF

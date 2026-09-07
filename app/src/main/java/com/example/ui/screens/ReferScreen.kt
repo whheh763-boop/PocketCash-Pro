@@ -29,7 +29,7 @@ import com.example.viewmodel.MainViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ReferScreen(viewModel: MainViewModel, onBack: () -> Unit) {
+fun ReferScreen(viewModel: MainViewModel, onBack: () -> Unit = {}) {
     val userState by viewModel.userState.collectAsState()
     val context = LocalContext.current
 

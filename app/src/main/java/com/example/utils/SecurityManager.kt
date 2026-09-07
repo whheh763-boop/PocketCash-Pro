@@ -1,43 +1,38 @@
 package com.example.utils
 
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.os.Build
-import android.util.Log
-import java.io.File
 
 object SecurityManager {
-    private const val TAG = "SecurityManager"
+    fun isDeviceSecure(): Boolean {
+        return !isEmulator() && !isRooted()
+    }
+    
+    fun isVpnActive(context: Context): Boolean {
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val activeNetwork = connectivityManager.activeNetwork ?: return false
+        val capabilities = connectivityManager.getNetworkCapabilities(activeNetwork) ?: return false
+        return capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN)
+    }
 
-    fun isEmulator(): Boolean {
-        val isEmulator = (Build.BRAND.startsWith("generic") && Build.DEVICE.startsWith("generic"))
-                || Build.FINGERPRINT.startsWith("generic")
+    private fun isEmulator(): Boolean {
+        return Build.FINGERPRINT.startsWith("generic")
                 || Build.FINGERPRINT.startsWith("unknown")
-                || Build.HARDWARE.contains("goldfish")
-                || Build.HARDWARE.contains("ranchu")
                 || Build.MODEL.contains("google_sdk")
                 || Build.MODEL.contains("Emulator")
                 || Build.MODEL.contains("Android SDK built for x86")
                 || Build.MANUFACTURER.contains("Genymotion")
-                || Build.PRODUCT.contains("sdk_google")
-                || Build.PRODUCT.contains("google_sdk")
-                || Build.PRODUCT.contains("sdk")
-                || Build.PRODUCT.contains("sdk_x86")
-                || Build.PRODUCT.contains("sdk_gphone64_arm64")
-                || Build.PRODUCT.contains("vbox86p")
-                || Build.PRODUCT.contains("emulator")
-                || Build.PRODUCT.contains("simulator")
-        
-        if (isEmulator) {
-            Log.w(TAG, "Emulator detected!")
-        }
-        return isEmulator
+                || (Build.BRAND.startsWith("generic") && Build.DEVICE.startsWith("generic"))
+                || "google_sdk" == Build.PRODUCT
     }
 
-    fun isRooted(): Boolean {
+    private fun isRooted(): Boolean {
         val buildTags = Build.TAGS
         if (buildTags != null && buildTags.contains("test-keys")) {
             return true
         }
-        
         val paths = arrayOf(
             "/system/app/Superuser.apk",
             "/sbin/su",
@@ -50,18 +45,9 @@ object SecurityManager {
             "/data/local/su",
             "/su/bin/su"
         )
-        
         for (path in paths) {
-            if (File(path).exists()) {
-                Log.w(TAG, "Root detected via binary at $path")
-                return true
-            }
+            if (java.io.File(path).exists()) return true
         }
-        
         return false
-    }
-
-    fun isDeviceSecure(): Boolean {
-        return !isEmulator() && !isRooted()
     }
 }

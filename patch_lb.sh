@@ -1,3 +1,4 @@
+cat << 'INNER_EOF' > app/src/main/java/com/example/ui/screens/LeaderboardScreen.kt
 package com.example.ui.screens
 
 import androidx.compose.foundation.background
@@ -99,3 +100,4 @@ fun LeaderboardItem(user: User, rank: Int, isCurrentUser: Boolean) {
         }
     }
 }
+INNER_EOF

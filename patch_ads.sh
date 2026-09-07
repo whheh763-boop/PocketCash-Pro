@@ -1,3 +1,4 @@
+cat << 'INNER_EOF' > app/src/main/java/com/example/ads/AdsManager.kt
 package com.example.ads
 
 import android.app.Activity
@@ -30,9 +31,9 @@ object AdsManager {
     private const val TAG = "AdsManager"
     
     // Using Test IDs, replace with Real IDs on production
-    private const val ADMOB_REWARDED_ID = "ca-app-pub-8551073579787342/1051396163"
-    private const val ADMOB_APP_OPEN_ID = "ca-app-pub-8551073579787342/9590407330"
-    private const val ADMOB_BANNER_ID = "ca-app-pub-8551073579787342/9889790237"
+    private const val ADMOB_REWARDED_ID = "ca-app-pub-3940256099942544/5224354917"
+    private const val ADMOB_APP_OPEN_ID = "ca-app-pub-3940256099942544/9257395921"
+    private const val ADMOB_BANNER_ID = "ca-app-pub-3940256099942544/6300978111"
     
     private const val UNITY_GAME_ID = "5996901"
 
@@ -185,9 +186,10 @@ fun BannerAdView(modifier: Modifier = Modifier) {
         factory = { context ->
             AdView(context).apply {
                 setAdSize(AdSize.BANNER)
-                adUnitId = "ca-app-pub-8551073579787342/9889790237" // Test ID
+                adUnitId = "ca-app-pub-3940256099942544/6300978111" // Test ID
                 loadAd(AdRequest.Builder().build())
             }
         }
     )
 }
+INNER_EOF
