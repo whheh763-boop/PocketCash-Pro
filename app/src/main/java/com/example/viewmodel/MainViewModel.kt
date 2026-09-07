@@ -9,57 +9,64 @@ import com.example.model.FirebaseRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Job
 
 class MainViewModel : ViewModel() {
     private val repository = FirebaseRepository()
     private var currentUid: String = ""
-
     private val _userState = MutableStateFlow(User())
     val userState: StateFlow<User> = _userState.asStateFlow()
-
-    private val _isDarkMode = MutableStateFlow(true)
-    val isDarkMode: StateFlow<Boolean> = _isDarkMode.asStateFlow()
-
-    private val _transactions = MutableStateFlow<List<Transaction>>(emptyList())
-    val transactions: StateFlow<List<Transaction>> = _transactions.asStateFlow()
-
     private val _webViewUrl = MutableStateFlow("")
     val webViewUrl: StateFlow<String> = _webViewUrl.asStateFlow()
-
     private val _webViewTitle = MutableStateFlow("")
     val webViewTitle: StateFlow<String> = _webViewTitle.asStateFlow()
     
+    private val _isDarkMode = MutableStateFlow(true)
+    val isDarkMode: StateFlow<Boolean> = _isDarkMode.asStateFlow()
+    
+    private val _transactions = MutableStateFlow<List<Transaction>>(emptyList())
+    val transactions: StateFlow<List<Transaction>> = _transactions.asStateFlow()
+    
+    private var userFlowJob: Job? = null
+    private var txFlowJob: Job? = null
+
     init {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                currentUid = repository.signInAnonymously()
-                
-                // Observe User Flow
-                launch {
-                    repository.getUserFlow(currentUid).collect { user ->
-                        _userState.value = user
-                    }
-                }
-                
-                // Observe Transactions Flow
-                launch {
-                    repository.getTransactionsFlow(currentUid).collect { txList ->
-                        _transactions.value = txList
-                    }
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+        // Automatically check if logged in
+        val uid = repository.isUserLoggedIn()
+        if (uid != null) {
+            startObserving(uid)
         }
     }
+    
+    suspend fun login(email: String, pass: String) {
+        val uid = repository.signInWithEmail(email, pass)
+        startObserving(uid)
+    }
+    
+    suspend fun signup(email: String, pass: String, country: Country, refCode: String) {
+        val uid = repository.signUpWithEmail(email, pass, country, refCode)
+        startObserving(uid)
+    }
 
-    fun setWebViewContent(title: String, url: String) {
-        _webViewTitle.value = title
-        _webViewUrl.value = url
+    private fun startObserving(uid: String) {
+        currentUid = uid
+        userFlowJob?.cancel()
+        txFlowJob?.cancel()
+        
+        userFlowJob = viewModelScope.launch(Dispatchers.IO) {
+            repository.getUserFlow(currentUid).collect { user ->
+                _userState.value = user
+            }
+        }
+        
+        txFlowJob = viewModelScope.launch(Dispatchers.IO) {
+            repository.getTransactionsFlow(currentUid).collect { txList ->
+                _transactions.value = txList
+            }
+        }
     }
 
     fun toggleTheme() {
@@ -74,10 +81,6 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    fun fetchTransactions() {
-        // Now automatically handled by flow
-    }
-
     fun updateCountry(country: Country) {
         if (currentUid.isNotEmpty()) {
             viewModelScope.launch(Dispatchers.IO) {
@@ -86,10 +89,11 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    fun addCoins(amount: Int) {
+    fun fetchTransactions() {}
+    fun addCoins(amount: Int, reason: String = "Task Reward") {
         if (currentUid.isNotEmpty()) {
             viewModelScope.launch(Dispatchers.IO) {
-                repository.addCoins(currentUid, amount, "Task Reward")
+                repository.addCoins(currentUid, amount, reason)
             }
         }
     }
@@ -102,25 +106,37 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    fun useMathQuizAttempt(): Boolean {
-        if (currentUid.isEmpty() || _userState.value.dailyMathLimit <= 0) return false
+    fun useMathQuizAttempt(onSuccess: () -> Unit, onFail: () -> Unit) {
+        if (currentUid.isEmpty() || _userState.value.dailyMathLimit <= 0) {
+            onFail()
+            return
+        }
         viewModelScope.launch(Dispatchers.IO) {
             val success = repository.useMathAttempt(currentUid)
-            if (success) {
-                repository.addCoins(currentUid, 10, "Math Quiz Reward")
+            withContext(Dispatchers.Main) {
+                if (success) {
+                    onSuccess()
+                } else {
+                    onFail()
+                }
             }
         }
-        return true
     }
 
-    fun useCaptchaAttempt(): Boolean {
-        if (currentUid.isEmpty() || _userState.value.dailyCaptchaLimit <= 0) return false
+    fun useCaptchaAttempt(onSuccess: () -> Unit, onFail: () -> Unit) {
+        if (currentUid.isEmpty() || _userState.value.dailyCaptchaLimit <= 0) {
+            onFail()
+            return
+        }
         viewModelScope.launch(Dispatchers.IO) {
             val success = repository.useCaptchaAttempt(currentUid)
-            if (success) {
-                repository.addCoins(currentUid, 5, "Captcha Reward")
+            withContext(Dispatchers.Main) {
+                if (success) {
+                    onSuccess()
+                } else {
+                    onFail()
+                }
             }
         }
-        return true
     }
 }

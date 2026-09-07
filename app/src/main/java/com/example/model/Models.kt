@@ -7,6 +7,7 @@ enum class Country(val displayName: String, val currencySymbol: String, val exch
 
 data class User(
     val uid: String = "",
+    val email: String = "",
     val displayName: String = "Guest User",
     val paymentId: String = "",
     val deviceId: String = "",

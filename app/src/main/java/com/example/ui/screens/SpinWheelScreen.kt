@@ -208,7 +208,7 @@ fun SpinWheelScreen(
 
                                 // Show Rewarded Ad when spin finishes
                                 activity?.let {
-                                    AdsManager.showAdMobRewarded(
+                                    AdsManager.showRewardedAd(
                                         activity = it,
                                         onRewardEarned = {
                                             viewModel.addCoins(earnedCoins)

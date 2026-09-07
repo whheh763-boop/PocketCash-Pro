@@ -1,3 +1,4 @@
+cat << 'INNER_EOF' > app/src/main/java/com/example/ui/screens/MathCaptchaScreen.kt
 package com.example.ui.screens
 
 import android.app.Activity
@@ -244,3 +245,4 @@ fun CaptchaTab(viewModel: MainViewModel) {
         Text(feedbackMessage, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
     }
 }
+INNER_EOF

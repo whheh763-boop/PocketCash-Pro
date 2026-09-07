@@ -78,7 +78,7 @@ fun WatchVideoScreen(
                 onClick = {
                     if (activity != null) {
                         isWatching = true
-                        AdsManager.showAdMobRewarded(
+                        AdsManager.showRewardedAd(
                             activity = activity,
                             onRewardEarned = {
                                 viewModel.addCoins(15)

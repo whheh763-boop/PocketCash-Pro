@@ -168,7 +168,7 @@ fun ScratchCardScreen(
                                             
                                             // Show Ad when scratched
                                             activity?.let {
-                                                AdsManager.showAdMobRewarded(
+                                                AdsManager.showRewardedAd(
                                                     activity = it,
                                                     onRewardEarned = {
                                                         viewModel.addCoins(earnedCoins)

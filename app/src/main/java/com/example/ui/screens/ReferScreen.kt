@@ -34,7 +34,7 @@ fun ReferScreen(viewModel: MainViewModel, onBack: () -> Unit) {
     val context = LocalContext.current
 
     // Generate a simple ref code if empty (in a real app, this is fetched from backend)
-    val refCode = if (userState.uid.length >= 6) userState.uid.take(6).uppercase() else "POCKET99"
+    val refCode = userState.referralCode
 
     Scaffold(
         topBar = {

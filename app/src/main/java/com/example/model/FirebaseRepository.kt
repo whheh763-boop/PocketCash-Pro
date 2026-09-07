@@ -15,6 +15,59 @@ class FirebaseRepository {
     private val db = FirebaseFirestore.getInstance()
     private val usersRef = db.collection("users")
 
+    suspend fun signUpWithEmail(email: String, pass: String, country: Country, refCode: String): String {
+        return try {
+            val result = auth.createUserWithEmailAndPassword(email, pass).await()
+            val uid = result.user?.uid ?: throw Exception("Auth failed")
+            
+            // Create user doc
+            val myReferralCode = UUID.randomUUID().toString().substring(0, 8).uppercase()
+            val newUser = User(
+                uid = uid,
+                email = email,
+                country = country,
+                referredBy = refCode,
+                referralCode = myReferralCode,
+                coinBalance = if (refCode.isNotEmpty()) 50 else 0, // Bonus for using referral
+                lifetimeEarnings = if (refCode.isNotEmpty()) 50 else 0
+            )
+            usersRef.document(uid).set(newUser).await()
+            
+            // If they used a code, reward the referrer
+            if (refCode.isNotEmpty()) {
+                val referrerSnapshot = usersRef.whereEqualTo("referralCode", refCode).get().await()
+                for (doc in referrerSnapshot.documents) {
+                    val rUid = doc.id
+                    val rCoins = doc.getLong("coinBalance") ?: 0
+                    val rLifetime = doc.getLong("lifetimeEarnings") ?: 0
+                    usersRef.document(rUid).update(
+                        "coinBalance", rCoins + 100,
+                        "lifetimeEarnings", rLifetime + 100
+                    )
+                }
+            }
+            
+            uid
+        } catch (e: Exception) {
+            Log.e("Firebase", "Signup Error", e)
+            throw e
+        }
+    }
+    
+    suspend fun signInWithEmail(email: String, pass: String): String {
+        return try {
+            val result = auth.signInWithEmailAndPassword(email, pass).await()
+            result.user?.uid ?: throw Exception("Auth failed")
+        } catch (e: Exception) {
+            Log.e("Firebase", "Signin Error", e)
+            throw e
+        }
+    }
+    
+    fun isUserLoggedIn(): String? {
+        return auth.currentUser?.uid
+    }
+
     suspend fun signInAnonymously(): String {
         return try {
             val user = auth.currentUser ?: auth.signInAnonymously().await().user
@@ -37,8 +90,9 @@ class FirebaseRepository {
                     trySend(user)
                 }
             } else {
-                // Create default user
-                val newUser = User(uid = uid)
+                // Should not happen for email login, but just in case
+                val myReferralCode = UUID.randomUUID().toString().substring(0, 8).uppercase()
+                val newUser = User(uid = uid, referralCode = myReferralCode)
                 usersRef.document(uid).set(newUser)
                 trySend(newUser)
             }
