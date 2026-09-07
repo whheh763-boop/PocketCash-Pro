@@ -1,0 +1,1 @@
+sed -i 's/implementation(platform(libs.firebase.bom))/implementation(platform(libs.firebase.bom))\n  implementation(libs.firebase.firestore)\n  implementation(libs.firebase.auth)/g' app/build.gradle.kts

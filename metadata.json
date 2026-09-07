@@ -1,0 +1,6 @@
+{
+  "name": "PocketCash Pro",
+  "description": "Cross-platform Earning App targeted at India and Nepal markets.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
